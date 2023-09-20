@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="scala-library-2.13.6_1798c1ef" type="Scala">
+    <properties>
+      <language-level>Scala_2_13</language-level>
+    </properties>
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.cache/bazel/_bazel_naveen/0cbaf48b4944d057bc14c38783dc883a/external/io_bazel_rules_scala_scala_library/scala-library-2.13.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

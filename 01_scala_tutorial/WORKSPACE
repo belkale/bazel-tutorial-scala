@@ -1,29 +1,74 @@
+workspace(name = "scala_tutorial")
+
+# Install Git rules
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load(
+    "@bazel_tools//tools/build_defs/repo:git.bzl",
+    "git_repository",
+    "new_git_repository",
+)
 
-skylib_version = "1.0.3"
-
+# Install skylib
 http_archive(
     name = "bazel_skylib",
-    sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
-    type = "tar.gz",
-    url = "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib-{}.tar.gz".format(skylib_version, skylib_version),
+    sha256 = "b8a1527901774180afc798aeb28c4634bdccf19c4d98e7bdd1ce79d1fe9aaad7",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
+    ],
 )
+
+# Scala rules
+
+SCALA_VERSION = "3.3.0"
+
+rules_scala_version = "30f8fbe042b835cc2173a474a6a2b360cd4d440f"
 
 http_archive(
     name = "io_bazel_rules_scala",
-    sha256 = "77a3b9308a8780fff3f10cdbbe36d55164b85a48123033f5e970fdae262e8eb2",
-    strip_prefix = "rules_scala-20220201",
+    patch_args = ["-p1"],
+    patches = ["rules_scala.patch"],
+    sha256 = "8ecb882997ebbaea341981c63c538674815cabb5b50a0a331ff770c597578715",
+    strip_prefix = "rules_scala-%s" % rules_scala_version,
     type = "zip",
-    url = "https://github.com/bazelbuild/rules_scala/releases/download/20220201/rules_scala-20220201.zip",
+    url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,
 )
 
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
 
-scala_config(scala_version = "2.13.8")
+scala_config(scala_version = SCALA_VERSION)
 
-load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
+load("@io_bazel_rules_scala//scala:scala.bzl", "rules_scala_setup", "rules_scala_toolchain_deps_repositories")
 
-scala_repositories()
+# loads other rules Rules Scala depends on
+rules_scala_setup()
+
+# Loads Maven deps like Scala compiler and standard libs. On production projects you should consider
+# defining a custom deps toolchains to use your project libs instead
+rules_scala_toolchain_deps_repositories(fetch_sources = True)
+
+load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
+
+scala_register_toolchains()
+
+# optional: setup ScalaTest toolchain and dependencies
+load("@io_bazel_rules_scala//testing:scalatest.bzl", "scalatest_repositories", "scalatest_toolchain")
+
+scalatest_repositories()
+
+scalatest_toolchain()
+
+# protocol buffer support
+rules_proto_version = "493169c1199dc21b9da860f7040a4502aa174676"
+
+http_archive(
+    name = "rules_proto",
+    #    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
+    strip_prefix = "rules_proto-%s" % rules_proto_version,
+    urls = [
+        "https://github.com/bazelbuild/rules_proto/archive/%s.zip" % rules_proto_version,
+    ],
+)
 
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
@@ -31,6 +76,105 @@ rules_proto_dependencies()
 
 rules_proto_toolchains()
 
-load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
+http_archive(
+    name = "com_google_protobuf",
+    sha256 = "f6ac7f4b735f9b7c50e45cff845e787eeb4acde9a8955542c9f1f7f95ada876f",
+    strip_prefix = "protobuf-23.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protobuf-23.3.zip"],
+)
 
-scala_register_toolchains()
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
+http_archive(
+    name = "rules_proto_grpc",
+    patch_args = ["-p1"],
+    patches = ["scala_proto_3.patch"],
+    sha256 = "928e4205f701b7798ce32f3d2171c1918b363e9a600390a25c876f075f1efc0a",
+    strip_prefix = "rules_proto_grpc-4.4.0",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/releases/download/4.4.0/rules_proto_grpc-4.4.0.tar.gz"],
+)
+
+load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
+
+rules_proto_grpc_toolchains()
+
+rules_proto_grpc_repos()
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+
+rules_proto_toolchains()
+
+#####
+# Maven support
+RULES_JVM_EXTERNAL_TAG = "5.3"
+
+RULES_JVM_EXTERNAL_SHA = "d31e369b854322ca5098ea12c69d7175ded971435e55c18dd9dd5f29cc5249ac"
+
+http_archive(
+    name = "rules_jvm_external",
+    #    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
+rules_jvm_external_deps()
+
+load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+
+rules_jvm_external_setup()
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+MAVEN_ARTIFACTS = [
+    "com.google.protobuf:protobuf-java:3.23.3",
+    "com.google.protobuf:protobuf-java-util:3.23.3",
+    "io.grpc:grpc-all:1.56.1",
+    #    "io.grpc:grpc-netty-shaded:1.56.1",
+    "com.thesamet.scalapb:compilerplugin_3:0.11.13",
+    "com.thesamet.scalapb:scalapb-runtime_3:0.11.13",
+    "com.thesamet.scalapb:scalapb-runtime-grpc_3:0.11.13",
+]
+
+maven_install(
+    name = "rules_proto_grpc_scala_maven",
+    artifacts = MAVEN_ARTIFACTS,
+    #    excluded_artifacts = [
+    #        "io.grpc:grpc-netty",
+    #    ],
+    generate_compat_repositories = True,
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+# Maven integration
+load("//3rdparty:workspace.bzl", "maven_dependencies")
+
+maven_dependencies()
+
+load("//3rdparty:target_file.bzl", "build_external_workspace")
+
+build_external_workspace(name = "third_party")
+
+bind(
+    name = "io_bazel_rules_scala/dependency/scalatest/scalatest",
+    actual = "//3rdparty/jvm/org/scalatest",
+)
+
+# Point to the version of grpc_java you want to use
+http_archive(
+    name = "grpc_java",
+    sha256 = "d03b2e88f88b10e32c36aeb7bf644750722da4168f5a242f2eff24f30e3a1a1f",
+    strip_prefix = "grpc-java-1.54.0",
+    url = "https://github.com/grpc/grpc-java/archive/v1.54.0.zip",
+)
+
+load("@grpc_java//:repositories.bzl", "grpc_java_repositories")
+
+grpc_java_repositories()

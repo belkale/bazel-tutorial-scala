@@ -1,0 +1,61 @@
+diff --git a/scala/BUILD.bazel b/scala/BUILD.bazel
+index 75050912..b860a2aa 100644
+--- a/scala/BUILD.bazel
++++ b/scala/BUILD.bazel
+@@ -24,6 +24,6 @@ java_binary(
+     name = "scala_pb_plugin_bin",
+     main_class = "scalapb.ScalaPbCodeGenerator",
+     runtime_deps = [
+-        "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_compilerplugin_2_12",
++        "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_compilerplugin_3",
+     ],
+ )
+diff --git a/scala/repositories.bzl b/scala/repositories.bzl
+index 933f7ce0..5e6d62ee 100644
+--- a/scala/repositories.bzl
++++ b/scala/repositories.bzl
+@@ -16,9 +16,8 @@ def scala_repos(**kwargs):  # buildifier: disable=function-docstring
+     io_bazel_rules_scala(**kwargs)
+
+ MAVEN_ARTIFACTS = [
+-    # "io.grpc:grpc-all:{}".format(GRPC_VERSION),
+-    "io.grpc:grpc-all:1.51.0",  # TODO: revert to above
+-    "com.thesamet.scalapb:compilerplugin_2.12:0.11.12",
+-    "com.thesamet.scalapb:scalapb-runtime_2.12:0.11.12",
+-    "com.thesamet.scalapb:scalapb-runtime-grpc_2.12:0.11.12",
++    "io.grpc:grpc-all:1.56.1",
++    "com.thesamet.scalapb:compilerplugin_3:0.11.13",
++    "com.thesamet.scalapb:scalapb-runtime_3:0.11.13",
++    "com.thesamet.scalapb:scalapb-runtime-grpc_3:0.11.13",
+ ]
+diff --git a/scala/scala_grpc_library.bzl b/scala/scala_grpc_library.bzl
+index 66a663ff..beab1f53 100644
+--- a/scala/scala_grpc_library.bzl
++++ b/scala/scala_grpc_library.bzl
+@@ -35,8 +35,10 @@ GRPC_DEPS = [
+     "@rules_proto_grpc_scala_maven//:io_grpc_grpc_netty",
+     "@rules_proto_grpc_scala_maven//:io_grpc_grpc_protobuf",
+     "@rules_proto_grpc_scala_maven//:io_grpc_grpc_stub",
++    "@rules_proto_grpc_scala_maven//:io_grpc_grpc_core",
++    "@rules_proto_grpc_scala_maven//:io_grpc_grpc_context",
+     "@rules_proto_grpc_scala_maven//:com_google_protobuf_protobuf_java",
+-    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_lenses_2_12",
+-    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_grpc_2_12",
+-    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_2_12",
++    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_lenses_3",
++    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_grpc_3",
++    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_3",
+ ]
+diff --git a/scala/scala_proto_library.bzl b/scala/scala_proto_library.bzl
+index ce6b1a9d..23572379 100644
+--- a/scala/scala_proto_library.bzl
++++ b/scala/scala_proto_library.bzl
+@@ -32,6 +32,6 @@ def scala_proto_library(name, **kwargs):  # buildifier: disable=function-docstri
+
+ PROTO_DEPS = [
+     "@rules_proto_grpc_scala_maven//:com_google_protobuf_protobuf_java",
+-    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_lenses_2_12",
+-    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_2_12",
++    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_lenses_3",
++    "@rules_proto_grpc_scala_maven//:com_thesamet_scalapb_scalapb_runtime_3",
+ ]
